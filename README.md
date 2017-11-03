@@ -9,6 +9,12 @@
 ### Installation (globally to use as CLI)
 npm install -g
 
+### Usage
+github-stats repoList <Org name> -t <GitHubToken>
+github-stats repoContributorCount <Org name> <Repo Name> -t <GitHubToken>
+github-stats orgContributorCount <Org name>  -t <GitHubToken>
+Use -p or --private to restrict to private repos only (repoList and orgContributorCount only)
+
 #### Commands
 - repoList: List all repositories under an organization. Can filter on private repos only (--private).
 - repoContributorCount: List the number of active contributors for a specific repositories
