@@ -9,14 +9,20 @@ var roundedNbOfWeeks =  Math.floor(nbOfDays/7);
 
 const authenticate = (options) => {
   var githubHandler;
+  var apiurl = 'https://api.github.com';
+  if(options.apiurl){
+      apiurl = options.apiurl;
+  }
   if(options.token){
     var githubHandler = new GitHub({
-      token: options.token
+      token: options.token,
+      apiurl: apiurl,
     });
   } else if(options.username && options.password){
     var githubHandler = new GitHub({
       username: username,
       password: password,
+      apiurl: apiurl,
     });
   } else {
     console.error(chalk.red("Invalid input ! Must provide token or username/password"));
@@ -99,6 +105,7 @@ program
   .option('-t, --token [GHToken]', 'Running command with Personal Github Token (for 2FA setup)')
   .option('-u, --username [username]', 'username (use Token if you set 2FA on Github)')
   .option('-pwd, --password [password]', 'password')
+  .option('-apiurl, --apiurl [apiurl]', 'API url if not https://api.Github.com')
   .action((org, options) => {
     var github = authenticate(options);
     getGithubOrgList(github, org, options.private)
@@ -124,6 +131,7 @@ program
   .option('-t, --token [GHToken]', 'Running command with Personal Github Token (for 2FA setup)')
   .option('-u, --username [username]', 'username (use Token if you set 2FA on Github)')
   .option('-pwd, --password [password]', 'password')
+  .option('-apiurl, --apiurl [apiurl]', 'API url if not https://api.Github.com')
   .action((org, repo, options) => {
     var github = authenticate(options);
     getGithubRepoStats(github, org, repo)
@@ -172,6 +180,7 @@ program
     .option('-u, --username [username]', 'username (use Token if you set 2FA on Github)')
     .option('-pwd, --password [password]', 'password')
     .option('-p, --private', 'private repos only')
+    .option('-apiurl, --apiurl [apiurl]', 'API url if not https://api.github.com')
     .action((org, options) => {
 
       var github = authenticate(options);
