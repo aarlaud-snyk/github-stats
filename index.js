@@ -35,11 +35,17 @@ const getGithubOrgList = (githubHandler,orgName, privateReposOnly) => {
   return new Promise((resolve,reject) => {
     var url = '/orgs/'+orgName+'/repos?type=all'
     if(privateReposOnly) url = '/orgs/'+orgName+'/repos?type=private';
-    githubHandler.paged(url, function (err, res) {
+    githubHandler.paged(url, function (err, res, stream) {
         if(err){
           reject(err);
         } else {
-          resolve(res);
+          let interpretedResponse = interpretResponseCode(stream.statusCode);
+          if(interpretedResponse == '\nOK'){
+            resolve(res);
+          } else {
+            reject(interpretedResponse);
+          }
+
         }
     });
   });
@@ -47,11 +53,16 @@ const getGithubOrgList = (githubHandler,orgName, privateReposOnly) => {
 
 const getGithubRepoStats = (githubHandler, orgName, repoName) => {
   return new Promise((resolve, reject) => {
-    githubHandler.paged('/repos/'+orgName+'/'+repoName+'/stats/contributors', function (err, res) {
+    githubHandler.paged('/repos/'+orgName+'/'+repoName+'/stats/contributors', function (err, res, stream) {
         if(err){
           reject(err);
         } else {
-          resolve(res);
+          let interpretedResponse = interpretResponseCode(stream.statusCode);
+          if(interpretedResponse == '\nOK'){
+            resolve(res);
+          } else {
+            reject(interpretedResponse);
+          }
         }
     });
   });
@@ -136,7 +147,6 @@ program
     var github = authenticate(options);
     getGithubRepoStats(github, org, repo)
     .then((data) => {
-
         var rawCount = data.length;
         var contributorsList = [];
         for(i=0;i<data.length;i++){
@@ -224,10 +234,34 @@ program
               console.log("\n");
             }
         })
+        .catch((err) => {
+          console.error(err);
+        })
       })
+      .catch((err) => {console.error(err);})
     });
 
 
 program.parse(process.argv);
 
 if (program.args.length === 0) program.help();
+
+
+const interpretResponseCode = (statusCode) => {
+  var response = "";
+  switch (statusCode) {
+    case 200:
+      response = "\nOK";
+      break;
+    case 202:
+    case 204:
+      response = "\nGithub received listing request and is processing data. Please try again in a moment";
+      break;
+    case 404:
+      response = "\nOrganization cannot be found.";
+      break;
+    default:
+      response = "\nUnexpected response code: "+statusCode;
+  }
+  return response;
+}
