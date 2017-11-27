@@ -251,10 +251,10 @@ const interpretResponseCode = (statusCode) => {
   var response = "";
   switch (statusCode) {
     case 200:
+    case 204:
       response = "\nOK";
       break;
     case 202:
-    case 204:
       response = "\nGithub received listing request and is processing data. Please try again in a moment";
       break;
     case 404:
