@@ -31,6 +31,8 @@ const authenticate = (options) => {
   return githubHandler;
 }
 
+const delay = ms => new Promise(resolve => setTimeout(resolve(""), ms));
+
 const getGithubOrgList = (githubHandler,orgName, privateReposOnly) => {
   return new Promise((resolve,reject) => {
     var url = '/orgs/'+orgName+'/repos?type=all'
@@ -51,8 +53,19 @@ const getGithubOrgList = (githubHandler,orgName, privateReposOnly) => {
   });
 }
 
+const wait = (ms) => {
+    var start = Date.now(),
+        now = start;
+    while (now - start < ms) {
+      now = Date.now();
+    }
+}
+
+
 const getGithubRepoStats = (githubHandler, orgName, repoName) => {
   return new Promise((resolve, reject) => {
+    wait(100);
+    console.log("getting stats for "+repoName);
     githubHandler.paged('/repos/'+orgName+'/'+repoName+'/stats/contributors', function (err, res, stream) {
         if(err){
           reject(err);
@@ -61,6 +74,7 @@ const getGithubRepoStats = (githubHandler, orgName, repoName) => {
           if(interpretedResponse == '\nOK'){
             resolve(res);
           } else {
+            console.error("Issue with "+orgName+"/"+repoName);
             reject(interpretedResponse);
           }
         }
@@ -106,7 +120,7 @@ const getGithubRepoSummaryStats = (githubHandler, orgName, repoName) => {
 program
   .version('1.0.0')
   .description('Snyk\'s Github contributors counter (active in the last 3 months)')
-  .usage('<command> [options] \n options: -t <GHToken> (2FA setup) or -u <username> -pwd <password>  --private for commands on private repos only')
+  .usage('<command> [options] \n options: -t <GHToken> (2FA setup) or -u <username> -pwd <password>  --private for commands on private repos only \n --apiurl <apiUrl if not api.github.com>')
 
 
 program
@@ -203,6 +217,7 @@ program
         for(i=0;i<data.length;i++){
             console.log(data[i].name);
             promiseArray.push(getGithubRepoSummaryStats(github, org, data[i].name));
+
         }
       })
       .then(() => {
