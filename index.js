@@ -1,10 +1,16 @@
 #!/usr/bin/env node
+const INTER_CALLS_DELAY = 1000;
 
 var program = require('commander');
 const chalk = require('chalk');
 var GitHub = require('github-base');
+const figlet = require('figlet');
+
 var nbOfDays = 90;
 var roundedNbOfWeeks =  Math.floor(nbOfDays/7);
+
+const EventEmitter = require('events').EventEmitter;
+const eventEmitter = new EventEmitter();
 
 
 const authenticate = (options) => {
@@ -31,8 +37,6 @@ const authenticate = (options) => {
   return githubHandler;
 }
 
-const delay = ms => new Promise(resolve => setTimeout(resolve(""), ms));
-
 const getGithubOrgList = (githubHandler,orgName, privateReposOnly) => {
   return new Promise((resolve,reject) => {
     var url = '/orgs/'+orgName+'/repos?type=all'
@@ -42,7 +46,7 @@ const getGithubOrgList = (githubHandler,orgName, privateReposOnly) => {
           reject(err);
         } else {
           let interpretedResponse = interpretResponseCode(stream.statusCode);
-          if(interpretedResponse == '\nOK'){
+          if(interpretedResponse == 'OK'){
             resolve(res);
           } else {
             reject(interpretedResponse);
@@ -53,29 +57,21 @@ const getGithubOrgList = (githubHandler,orgName, privateReposOnly) => {
   });
 }
 
-const wait = (ms) => {
-    var start = Date.now(),
-        now = start;
-    while (now - start < ms) {
-      now = Date.now();
-    }
-}
+
 
 
 const getGithubRepoStats = (githubHandler, orgName, repoName) => {
   return new Promise((resolve, reject) => {
-    wait(100);
-    console.log("getting stats for "+repoName);
     githubHandler.paged('/repos/'+orgName+'/'+repoName+'/stats/contributors', function (err, res, stream) {
         if(err){
           reject(err);
         } else {
           let interpretedResponse = interpretResponseCode(stream.statusCode);
-          if(interpretedResponse == '\nOK'){
+          if(interpretedResponse == 'OK'){
             resolve(res);
           } else {
             console.error("Issue with "+orgName+"/"+repoName);
-            reject(interpretedResponse);
+            reject({"error":interpretedResponse, "statusCode":stream.statusCode, "headers":stream.headers});
           }
         }
     });
@@ -108,6 +104,7 @@ const getGithubRepoSummaryStats = (githubHandler, orgName, repoName) => {
           }
 
         }
+        eventEmitter.emit('promiseCompleted', repoName, contributorsList)
         resolve(contributorsList);
 
     })
@@ -115,6 +112,107 @@ const getGithubRepoSummaryStats = (githubHandler, orgName, repoName) => {
       reject(error);
     })
   })
+}
+
+const registerEventListeners = (promiseArray) => {
+  var repoStatsList = [];
+  var lastMessage;
+  // register a listener for the 'randomString' event
+  eventEmitter.on('promiseCompleted', function (repoName, list) {
+    console.log(list.length+" contributors for \t"+repoName);
+    repoStatsList.push(list);
+    setTimeout(() => {promiseProcess(promiseArray)}, INTER_CALLS_DELAY);
+    //promiseProcess(promiseArray);
+  });
+
+  eventEmitter.on('allPromisesCompleted', function () {
+    if(lastMessage){
+      console.log(lastMessage);
+    } else {
+        consolidateContributorsList(repoStatsList);
+    }
+
+  });
+
+  eventEmitter.on('setLastMessage', (message) => {
+    lastMessage = message;
+  });
+
+  // eventEmitter.on('promiseFailed', function (repoName, list, error) {
+  //      console.error("Promise failed");
+  //      //TODO: Handle retry with proper backoff X-retry value or exponential if no retry
+  //      console.error(error);
+  // });
+}
+
+const promiseProcess = (promiseArray) => {
+  if(promiseArray.length > 0){
+    promiseArray[0]()
+    .then(() => promiseArray.shift())
+    .catch((error) => {
+      if(error && error.statusCode == 202){
+        console.log(error.error);
+        eventEmitter.emit('setLastMessage', '\nGithub is processing data, please try again in a moment');
+        promiseArray.shift();
+        promiseProcess(promiseArray);
+      } else if(error && error.statusCode == 403){
+        //TODO: if X-Retry header value retry then, otherwise exponential backoff
+      } else {
+        console.error(error);
+      }
+
+      //eventEmitter.emit('promiseFailed', repoName, error)
+    });
+
+  } else if(promiseArray.length == 0){
+    eventEmitter.emit('allPromisesCompleted');
+  }
+}
+
+const consolidateContributorsList = (data) => {
+  var contributorsList = []
+  for(i=0;i<data.length;i++){
+
+        for(j=0;j<data[i].length;j++){
+
+          if(data[i][j].name in contributorsList){
+            let commitCount = contributorsList[data[i][j].name]['# of commits'];
+            contributorsList[data[i][j].name] = {'# of commits': commitCount + data[i][j]['# of commits']};
+          } else {
+            contributorsList[data[i][j].name] = {"# of commits": data[i][j]['# of commits']}
+          }
+        }
+
+      }
+        var contributorsCount = 0;
+        for (x in contributorsList)
+        { contributorsCount++; }
+        console.log(chalk.red("\nTotal active contributors with commit in the last "+ nbOfDays + " days (rounded at "+roundedNbOfWeeks+" weeks) = "+ contributorsCount+"\n"));
+
+        if(contributorsCount > 0){
+          console.log(chalk.blue("Contributors List:"));
+          console.log(contributorsList);
+          console.log("\n");
+        }
+}
+
+const introText = () => {
+  figlet.text('SNYK', {
+  font: 'Star Wars',
+  horizontalLayout: 'default',
+  verticalLayout: 'default'
+}, function(err, data) {
+  if (err) {
+      console.log('Something went wrong...');
+      console.dir(err);
+      return;
+  }
+  console.log(data)
+  console.log("\n");
+  console.log("Snyk tool for counting active contributors");
+  console.log("Respecting Github API Rate limiting best practices, so be patient :)");
+});
+
 }
 
 program
@@ -132,6 +230,7 @@ program
   .option('-pwd, --password [password]', 'password')
   .option('-apiurl, --apiurl [apiurl]', 'API url if not https://api.Github.com')
   .action((org, options) => {
+    introText();
     var github = authenticate(options);
     getGithubOrgList(github, org, options.private)
     .then((data) => {
@@ -158,6 +257,7 @@ program
   .option('-pwd, --password [password]', 'password')
   .option('-apiurl, --apiurl [apiurl]', 'API url if not https://api.Github.com')
   .action((org, repo, options) => {
+    introText();
     var github = authenticate(options);
     getGithubRepoStats(github, org, repo)
     .then((data) => {
@@ -206,52 +306,24 @@ program
     .option('-p, --private', 'private repos only')
     .option('-apiurl, --apiurl [apiurl]', 'API url if not https://api.github.com')
     .action((org, options) => {
-
+      introText();
       var github = authenticate(options);
       var promiseArray = [];
+
+
       getGithubOrgList(github, org, options.private)
       .then((data) => {
         if(options.private) console.log(chalk.red("\nPrivate Repos Only"));
         console.log(chalk.blue("\nTotal # of repos = "+data.length));
-        console.log(chalk.blue("\nRepo list:"));
-        for(i=0;i<data.length;i++){
-            console.log(data[i].name);
-            promiseArray.push(getGithubRepoSummaryStats(github, org, data[i].name));
-
-        }
-      })
-      .then(() => {
-        Promise.all(promiseArray)
-        .then((data) => {
-          // console.log(data.length);
-          var contributorsList = {};
-          for(i=0;i<data.length;i++){
-
-            for(j=0;j<data[i].length;j++){
-
-              if(data[i][j].name in contributorsList){
-                let commitCount = contributorsList[data[i][j].name]['# of commits'];
-                contributorsList[data[i][j].name] = {'# of commits': commitCount + data[i][j]['# of commits']};
-              } else {
-                contributorsList[data[i][j].name] = {"# of commits": data[i][j]['# of commits']}
-              }
-            }
-
-          }
-            var contributorsCount = 0;
-            for (x in contributorsList)
-            { contributorsCount++; }
-            console.log(chalk.red("\nTotal active contributors with commit in the last "+ nbOfDays + " days (rounded at "+roundedNbOfWeeks+" weeks) = "+ contributorsCount+"\n"));
-
-            if(contributorsCount > 0){
-              console.log(chalk.blue("Contributors List:"));
-              console.log(contributorsList);
-              console.log("\n");
-            }
-        })
-        .catch((err) => {
-          console.error(err);
-        })
+        //console.log(chalk.blue("\nRepo list:"));
+        // for(i=0;i<data.length;i++){
+        //     console.log(data[i].name);
+        //     promiseArray.push(getGithubRepoSummaryStats(github, org, data[i].name));
+        //
+        // }
+        promiseArray = data.map(repo => () => getGithubRepoSummaryStats(github, org, repo.name));
+        registerEventListeners(promiseArray);
+        promiseProcess(promiseArray);
       })
       .catch((err) => {console.error(err);})
     });
@@ -267,16 +339,19 @@ const interpretResponseCode = (statusCode) => {
   switch (statusCode) {
     case 200:
     case 204:
-      response = "\nOK";
+      response = "OK";
       break;
     case 202:
-      response = "\nGithub received listing request and is processing data. Please try again in a moment";
+      response = "Github received listing request and is processing data. Please try again in a moment";
       break;
     case 404:
-      response = "\nOrganization cannot be found.";
+      response = "Organization cannot be found.";
+      break;
+    case 403:
+      response = "Access Denied";
       break;
     default:
-      response = "\nUnexpected response code: "+statusCode;
+      response = "Unexpected response code: "+statusCode;
   }
   return response;
 }
