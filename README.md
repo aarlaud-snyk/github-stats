@@ -14,7 +14,7 @@ npm install -g
 - github-stats repoContributorCount \<Org name\> \<Repo Name\> -t \<GitHubToken\>
 - github-stats orgContributorCount \<Org name\>  -t \<GitHubToken\>
 - Use -p or --private to restrict to private repos only (repoList and orgContributorCount only)
-## Github does not return results immediately. So it is very likely not to return any results at first. Try again after a few minutes and you'll get the results. This will be more gracefully handled in the next iteration. (see [![Github's word about caching](https://developer.github.com/v3/repos/statistics/))](https://developer.github.com/v3/repos/statistics/)
+## Github does not return results immediately. So it is very likely not to return any results at first. Try again after a few minutes and you'll get the results. (see [![Github's word about caching](https://developer.github.com/v3/repos/statistics/))](https://developer.github.com/v3/repos/statistics/)
 
 #### Commands
 - repoList: List all repositories under an organization. Can filter on private repos only (--private).
@@ -26,6 +26,7 @@ npm install -g
 #### Prerequisites
 - Node 8 (ES6 support for Promises)
 - Be member of the organization for private repositories
+- **full repo scope granted** to personal access token
 - Github credentials
 
 # Untested
