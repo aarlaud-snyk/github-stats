@@ -15,6 +15,8 @@ npm install -g
 - github-stats orgContributorCount \<Org name\>  -t \<GitHubToken\>
 - Use -p or --private to restrict to private repos only (repoList and orgContributorCount only)
 - use --apiurl to set the url of your Github Enterprise instance (i.e --apiurl=https://api.my-ghe-instance.com)
+- if using proxy, exporting the http_proxy settings should do the trick. Google search the details of how to set that up, pretty straightforward.
+
 ## Github does not return results immediately. So it is very likely not to return any results at first. Try again after a few minutes and you'll get the results. (see [![Github's word about caching](https://developer.github.com/v3/repos/statistics/))](https://developer.github.com/v3/repos/statistics/)
 
 #### Commands
