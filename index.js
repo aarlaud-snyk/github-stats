@@ -78,7 +78,7 @@ const getGithubRepoStats = (githubHandler, orgName, repoName) => {
   });
 }
 
-const getGithubRepoSummaryStats = (githubHandler, orgName, repoName) => {
+const getGithubRepoSummaryStats = (githubHandler, orgName, repoName,isForked) => {
   return new Promise((resolve,reject) => {
     getGithubRepoStats(githubHandler, orgName, repoName)
     .then((data) => {
@@ -99,8 +99,10 @@ const getGithubRepoSummaryStats = (githubHandler, orgName, repoName) => {
                 nbOfCommits += data[i].weeks[j].c;
               }
           }
-          if(nbOfCommits > 0){
+          if(nbOfCommits > 0 && isForked == false){
             contributorsList.push({'name':data[i].author.login, '# of commits' : nbOfCommits});
+          } else if(nbOfCommits > 0 && isForked == true){
+            contributorsList.push({'fork': true, 'name':data[i].author.login, '# of commits' : nbOfCommits});
           }
 
         }
@@ -170,16 +172,25 @@ const promiseProcess = (promiseArray) => {
 }
 
 const consolidateContributorsList = (data) => {
-  var contributorsList = []
+  var contributorsList = [];
+  var forkcontributorsList = [];
   for(i=0;i<data.length;i++){
 
         for(j=0;j<data[i].length;j++){
-
-          if(data[i][j].name in contributorsList){
-            let commitCount = contributorsList[data[i][j].name]['# of commits'];
-            contributorsList[data[i][j].name] = {'# of commits': commitCount + data[i][j]['# of commits']};
+          if(data[i][j].fork){
+            if(data[i][j].name in forkcontributorsList){
+              let commitCount = forkcontributorsList[data[i][j].name]['# of commits'];
+              forkcontributorsList[data[i][j].name] = {'# of commits': commitCount + data[i][j]['# of commits']};
+            } else {
+              forkcontributorsList[data[i][j].name] = {"# of commits": data[i][j]['# of commits']}
+            }
           } else {
-            contributorsList[data[i][j].name] = {"# of commits": data[i][j]['# of commits']}
+            if(data[i][j].name in contributorsList){
+              let commitCount = contributorsList[data[i][j].name]['# of commits'];
+              contributorsList[data[i][j].name] = {'# of commits': commitCount + data[i][j]['# of commits']};
+            } else {
+              contributorsList[data[i][j].name] = {"# of commits": data[i][j]['# of commits']}
+            }
           }
         }
 
@@ -192,6 +203,17 @@ const consolidateContributorsList = (data) => {
         if(contributorsCount > 0){
           console.log(chalk.blue("Contributors List:"));
           console.log(contributorsList);
+          console.log("\n");
+        }
+
+        var forkContributorsCount = 0;
+        for (x in forkcontributorsList)
+        { forkContributorsCount++; }
+        console.log(chalk.red("\nTotal forked repo active contributors with commit in the last "+ nbOfDays + " days (rounded at "+roundedNbOfWeeks+" weeks) = "+ forkContributorsCount+"\n"));
+
+        if(contributorsCount > 0){
+          console.log(chalk.blue("Fork Contributors List:"));
+          console.log(forkcontributorsList);
           console.log("\n");
         }
 }
@@ -237,9 +259,20 @@ program
       if(options.private) console.log(chalk.red("\nPrivate Repos Only"));
       console.log(chalk.blue("\nTotal # of repos = "+data.length));
       console.log(chalk.blue("\nRepo list:"));
+      var forked_repos = [];
       for(i=0;i<data.length;i++){
+        if(data[i].fork){
+          forked_repos.push(data[i].name);
+        } else {
           console.log(data[i].name);
+        }
       }
+      console.log(chalk.blue("\nForked Repo list:"));
+      for(i=0;i<forked_repos.length;i++){
+          console.log(forked_repos[i]);
+      }
+
+
       console.log("\n");
     })
     .catch((error) => {
@@ -321,7 +354,7 @@ program
         //     promiseArray.push(getGithubRepoSummaryStats(github, org, data[i].name));
         //
         // }
-        promiseArray = data.map(repo => () => getGithubRepoSummaryStats(github, org, repo.name));
+        promiseArray = data.map(repo => () => getGithubRepoSummaryStats(github, org, repo.name, repo.fork));
         registerEventListeners(promiseArray);
         promiseProcess(promiseArray);
       })
