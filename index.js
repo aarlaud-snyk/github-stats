@@ -348,12 +348,6 @@ program
       .then((data) => {
         if(options.private) console.log(chalk.red("\nPrivate Repos Only"));
         console.log(chalk.blue("\nTotal # of repos = "+data.length));
-        //console.log(chalk.blue("\nRepo list:"));
-        // for(i=0;i<data.length;i++){
-        //     console.log(data[i].name);
-        //     promiseArray.push(getGithubRepoSummaryStats(github, org, data[i].name));
-        //
-        // }
         promiseArray = data.map(repo => () => getGithubRepoSummaryStats(github, org, repo.name, repo.fork));
         registerEventListeners(promiseArray);
         promiseProcess(promiseArray);
