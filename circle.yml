@@ -8,6 +8,9 @@ jobs:
           name: "Checkout"
           command: |
             git clone https://github.com/aarlaud-snyk/github-stats
+      - run:
+          name: "Change dir"
+          command: |
             cd github-stats
       - run:
           name: "Build"
