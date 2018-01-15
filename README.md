@@ -2,6 +2,7 @@
 ## Simple CLI node app to extract details about github organization and repositories
 
 [![Known Vulnerabilities](https://snyk.io/test/github/aarlaud-snyk/github-stats/badge.svg)](https://snyk.io/test/github/aarlaud-snyk/github-stats)
+[![CircleCI](https://circleci.com/gh/aarlaud-snyk/github-stats.svg?style=svg)](https://circleci.com/gh/aarlaud-snyk/github-stats)
 
 
 ##### Packages: Node JS CLI app using commander, chalk, and github-base
