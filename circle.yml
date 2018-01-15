@@ -13,10 +13,6 @@ jobs:
           command: |
             git clone https://github.com/aarlaud-snyk/github-stats
       - run:
-          name: "Change dir"
-          command: |
-            cd github-stats
-      - run:
           name: "Build"
           command: |
             cd github-stats
@@ -29,4 +25,5 @@ jobs:
       - run:
           name: "Monitor"
           command: |
-            snyk monitor
+            cd github-stats
+            snyk monitor --org=aarlaud-snyk
