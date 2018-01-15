@@ -2,12 +2,12 @@ version: 2
 jobs:
   build:
     docker:
-      - image: node:8.0
+      - image: circleci/node:8.0
     steps:
       - run:
           name: "Setup Snyk"
           command: |
-            npm install -g snyk
+            sudo npm install -g snyk
       - run:
           name: "Checkout"
           command: |
