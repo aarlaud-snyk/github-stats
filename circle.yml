@@ -5,6 +5,10 @@ jobs:
       - image: node:8.0
     steps:
       - run:
+          name: "Setup Snyk"
+          command: |
+            npm install -g snyk
+      - run:
           name: "Checkout"
           command: |
             git clone https://github.com/aarlaud-snyk/github-stats
