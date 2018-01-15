@@ -15,10 +15,12 @@ jobs:
       - run:
           name: "Build"
           command: |
+            cd github-stats
             npm install
       - run:
           name: "Test"
           command: |
+            cd github-stats
             npm test
       - run:
           name: "Monitor"
