@@ -5,7 +5,14 @@ jobs:
       - image: node:8.0
     steps:
       - run:
-          name: "Checking Versions"
+          name: "Build"
           command: |
-            node --version
-            npm --version
+            npm install
+      - run:
+          name: "Test"
+          command: |
+            npm test
+      - run:
+          name: "Monitor"
+          command: |
+            snyk monitor
