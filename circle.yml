@@ -5,6 +5,11 @@ jobs:
       - image: node:8.0
     steps:
       - run:
+          name: "Checkout"
+          command: |
+            git clone https://github.com/aarlaud-snyk/github-stats
+            cd github-stats
+      - run:
           name: "Build"
           command: |
             npm install
