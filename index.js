@@ -17,6 +17,12 @@ const authenticate = (options) => {
   var githubHandler;
   var apiurl = 'https://api.github.com';
   if(options.apiurl){
+    if(options.apiurl.substring(0,8) != 'https://' || !options.apiurl.includes('/api/v3')){
+      console.log("The api url should look like https://mygheinstanceurl.mycompany.com/api/v3");
+      process.exit(1);
+    }
+    //console.log(options.apiurl.includes('/api/v3'));
+      //if(options.apiurl.substring(0,7))
       apiurl = options.apiurl;
   }
   if(options.token){
@@ -240,7 +246,7 @@ const introText = () => {
 program
   .version('1.0.0')
   .description('Snyk\'s Github contributors counter (active in the last 3 months)')
-  .usage('<command> [options] \n options: -t <GHToken> (2FA setup) or -u <username> -pwd <password>  --private for commands on private repos only \n --apiurl <apiUrl if not api.github.com>')
+  .usage('<command> [options] \n options: -t <GHToken> (2FA setup) or -u <username> -pwd <password>  --private for commands on private repos only \n --apiurl <apiUrl if not https://api.github.com. Includes scheme an api path, ie https://myusualgheurl.company.com/api/v3>')
 
 
 program
