@@ -1,4 +1,4 @@
-# Github list and stats extractor
+# Github list and stats extractor (both Github.com and Github Enterprise)
 ## Simple CLI node app to extract details about github organization and repositories
 
 [![Known Vulnerabilities](https://snyk.io/test/github/aarlaud-snyk/github-stats/badge.svg)](https://snyk.io/test/github/aarlaud-snyk/github-stats)
@@ -9,6 +9,13 @@
 
 ### Installation (globally to use as CLI)
 npm install -g
+
+#### Prerequisites
+- Node 8 (ES6 support for Promises)
+- Be member of the organization for private repositories
+- **full repo scope granted** to personal access token
+- Github credentials
+- If using Github Enterprise, you'll need your api endpoint. Usually looks like the base url you know appended with /api/v3, i.e https://my-ghe-instance.mycompany.com/api/v3.
 
 ### Usage
 - github-stats repoList \<Org name\> -t \<GitHubToken\>
@@ -27,11 +34,6 @@ npm install -g
 
 ##### An active contributor to a repo is someone who has committed code at least once in the last 90 days.
 
-#### Prerequisites
-- Node 8 (ES6 support for Promises)
-- Be member of the organization for private repositories
-- **full repo scope granted** to personal access token
-- Github credentials
 
 # Untested
 1. username and password attempts, mainly because I have 2FA enabled so need a token. Do yourself a favor, please enable 2FA regardless
