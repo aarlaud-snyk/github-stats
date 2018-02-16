@@ -7,7 +7,7 @@
     "github-stats": "./index.js"
   },
   "scripts": {
-    "test": "snyk test"
+    "test": "snyk test --org=aarlaud-snyk"
   },
   "author": "Antoine Arlaud",
   "license": "MIT",
