@@ -165,6 +165,8 @@ const promiseProcess = (promiseArray) => {
         promiseProcess(promiseArray);
       } else if(error && error.statusCode == 403){
         //TODO: if X-Retry header value retry then, otherwise exponential backoff
+        console.error("403!");
+        console.error(error);
       } else {
         console.error(error);
       }
