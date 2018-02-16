@@ -294,9 +294,10 @@ program
   .option('-t, --token [GHToken]', 'Running command with Personal Github Token (for 2FA setup)')
   .option('-u, --username [username]', 'username (use Token if you set 2FA on Github)')
   .option('-pwd, --password [password]', 'password')
+  .option('-r, --raw', 'raw output')
   .option('-apiurl, --apiurl [apiurl]', 'API url if not https://api.Github.com')
   .action((org, repo, options) => {
-    introText();
+    if(!options.raw) introText();
     var github = authenticate(options);
     getGithubRepoStats(github, org, repo)
     .then((data) => {
@@ -317,17 +318,27 @@ program
               }
           }
           if(nbOfCommits > 0){
-            contributorsList.push({'name':data[i].author.login, '# of commits' : nbOfCommits});
+            if(options.raw){
+              contributorsList.push(data[i].author.login);
+            } else {
+              contributorsList.push({'name':data[i].author.login, '# of commits' : nbOfCommits});
+            }
+
           }
 
         }
 
+        if(!options.raw){
+          console.log(chalk.red("\nTotal active contributors in the last "+nbOfDays+" days = " + contributorsList.length));
+          console.log(chalk.blue("\nTotal contributors since first commit = " + rawCount));
+          console.log(chalk.blue("\nDetails for the last " + nbOfDays + " days (rounded at "+ roundedNbOfWeeks + " weeks): "));
+          console.log(contributorsList);
+          console.log("\n");
+        } else {
+          console.log(contributorsList);
+          console.log("\n");
+        }
 
-        console.log(chalk.red("\nTotal active contributors in the last "+nbOfDays+" days = " + contributorsList.length));
-        console.log(chalk.blue("\nTotal contributors since first commit = " + rawCount));
-        console.log(chalk.blue("\nDetails for the last " + nbOfDays + " days (rounded at "+ roundedNbOfWeeks + " weeks): "));
-        console.log(contributorsList);
-        console.log("\n");
     })
     .catch((error) => {
       console.error(error);
