@@ -5,10 +5,12 @@ var program = require('commander');
 const chalk = require('chalk');
 var GitHub = require('github-base');
 const figlet = require('figlet');
+var fs = require('fs');
 
 var nbOfDays = 90;
 var roundedNbOfWeeks =  Math.floor(nbOfDays/7);
-
+var filePath = __dirname+'/tmp/';
+var organization = "";
 const EventEmitter = require('events').EventEmitter;
 const eventEmitter = new EventEmitter();
 
@@ -90,6 +92,7 @@ const getGithubRepoSummaryStats = (githubHandler, orgName, repoName,isForked) =>
     .then((data) => {
 
         var rawCount = data.length;
+
         var contributorsList = [];
         for(i=0;i<data.length;i++){
 
@@ -112,6 +115,7 @@ const getGithubRepoSummaryStats = (githubHandler, orgName, repoName,isForked) =>
           }
 
         }
+
         eventEmitter.emit('promiseCompleted', repoName, contributorsList)
         resolve(contributorsList);
 
@@ -127,9 +131,33 @@ const registerEventListeners = (promiseArray) => {
   var lastMessage;
   // register a listener for the 'randomString' event
   eventEmitter.on('promiseCompleted', function (repoName, list) {
+    
     console.log(list.length+" contributors for \t"+repoName);
-    repoStatsList.push(list);
-    setTimeout(() => {promiseProcess(promiseArray)}, INTER_CALLS_DELAY);
+    // repoStatsList.push(list);
+    fs.readFile(filePath+organization, 'utf8', function(err, contents) {
+        var repoListArray = JSON.parse(contents);
+        var newContent = [];
+        for(var i=0; i<repoListArray.length; i++){
+
+          if(repoListArray[i].name == repoName){
+            //console.log({"name":repoListArray[i].name, "forked":repoListArray[i].forked, "contributorsList":list});
+            newContent.push({"name":repoListArray[i].name, "forked":repoListArray[i].forked, "contributorsList":list})
+          } else {
+            newContent.push(repoListArray[i]);
+          }
+        }
+
+        fs.writeFile(filePath+organization, JSON.stringify(newContent), function(err) {
+            if(err) {
+                return console.log(err);
+            }
+            setTimeout(() => {promiseProcess(promiseArray)}, INTER_CALLS_DELAY);
+        });
+
+    });
+
+
+
     //promiseProcess(promiseArray);
   });
 
@@ -137,7 +165,9 @@ const registerEventListeners = (promiseArray) => {
     if(lastMessage){
       console.log(lastMessage);
     } else {
-        consolidateContributorsList(repoStatsList);
+
+        //consolidateContributorsList(repoStatsList);
+        consolidateContributorsList();
     }
 
   });
@@ -179,51 +209,100 @@ const promiseProcess = (promiseArray) => {
   }
 }
 
-const consolidateContributorsList = (data) => {
+const consolidateContributorsList = (data = null) => {
   var contributorsList = [];
   var forkcontributorsList = [];
-  for(i=0;i<data.length;i++){
+  fs.readFile(filePath+organization, 'utf8', function(err, contents) {
+      var data = JSON.parse(contents);
 
-        for(j=0;j<data[i].length;j++){
-          if(data[i][j].fork){
-            if(data[i][j].name in forkcontributorsList){
-              let commitCount = forkcontributorsList[data[i][j].name]['# of commits'];
-              forkcontributorsList[data[i][j].name] = {'# of commits': commitCount + data[i][j]['# of commits']};
-            } else {
-              forkcontributorsList[data[i][j].name] = {"# of commits": data[i][j]['# of commits']}
+      for(i=0;i<data.length;i++){
+
+            for(j=0;j<data[i].contributorsList.length;j++){
+              if(data[i].forked){
+                if(data[i].contributorsList[j].name in forkcontributorsList){
+                  let commitCount = forkcontributorsList[data[i].contributorsList[j].name]['# of commits'];
+                  forkcontributorsList[data[i].contributorsList[j].name] = {'# of commits': commitCount + data[i].contributorsList[j]['# of commits']};
+                } else {
+                  forkcontributorsList[data[i].contributorsList[j].name] = {"# of commits": data[i].contributorsList[j]['# of commits']}
+                }
+              } else {
+                if(data[i].contributorsList[j].name in contributorsList){
+                  let commitCount = contributorsList[data[i].contributorsList[j].name]['# of commits'];
+                  contributorsList[data[i].contributorsList[j].name] = {'# of commits': commitCount + data[i].contributorsList[j]['# of commits']};
+                } else {
+                  contributorsList[data[i].contributorsList[j].name] = {"# of commits": data[i].contributorsList[j]['# of commits']}
+                }
+              }
             }
-          } else {
-            if(data[i][j].name in contributorsList){
-              let commitCount = contributorsList[data[i][j].name]['# of commits'];
-              contributorsList[data[i][j].name] = {'# of commits': commitCount + data[i][j]['# of commits']};
-            } else {
-              contributorsList[data[i][j].name] = {"# of commits": data[i][j]['# of commits']}
-            }
+
           }
-        }
+            var contributorsCount = 0;
+            for (x in contributorsList)
+            { contributorsCount++; }
+            console.log(chalk.red("\nTotal active contributors with commit in the last "+ nbOfDays + " days (rounded at "+roundedNbOfWeeks+" weeks) = "+ contributorsCount+"\n"));
 
-      }
-        var contributorsCount = 0;
-        for (x in contributorsList)
-        { contributorsCount++; }
-        console.log(chalk.red("\nTotal active contributors with commit in the last "+ nbOfDays + " days (rounded at "+roundedNbOfWeeks+" weeks) = "+ contributorsCount+"\n"));
+            if(contributorsCount > 0){
+              console.log(chalk.blue("Contributors List:"));
+              console.log(contributorsList);
+              console.log("\n");
+            }
 
-        if(contributorsCount > 0){
-          console.log(chalk.blue("Contributors List:"));
-          console.log(contributorsList);
-          console.log("\n");
-        }
+            var forkContributorsCount = 0;
+            for (x in forkcontributorsList)
+            { forkContributorsCount++; }
+            console.log(chalk.red("\nTotal forked repo active contributors with commit in the last "+ nbOfDays + " days (rounded at "+roundedNbOfWeeks+" weeks) = "+ forkContributorsCount+"\n"));
 
-        var forkContributorsCount = 0;
-        for (x in forkcontributorsList)
-        { forkContributorsCount++; }
-        console.log(chalk.red("\nTotal forked repo active contributors with commit in the last "+ nbOfDays + " days (rounded at "+roundedNbOfWeeks+" weeks) = "+ forkContributorsCount+"\n"));
+            if(contributorsCount > 0){
+              console.log(chalk.blue("Fork Contributors List:"));
+              console.log(forkcontributorsList);
+              console.log("\n");
+            }
 
-        if(contributorsCount > 0){
-          console.log(chalk.blue("Fork Contributors List:"));
-          console.log(forkcontributorsList);
-          console.log("\n");
-        }
+  });
+
+
+  // for(i=0;i<data.length;i++){
+  //
+  //       for(j=0;j<data[i].length;j++){
+  //         if(data[i][j].fork){
+  //           if(data[i][j].name in forkcontributorsList){
+  //             let commitCount = forkcontributorsList[data[i][j].name]['# of commits'];
+  //             forkcontributorsList[data[i][j].name] = {'# of commits': commitCount + data[i][j]['# of commits']};
+  //           } else {
+  //             forkcontributorsList[data[i][j].name] = {"# of commits": data[i][j]['# of commits']}
+  //           }
+  //         } else {
+  //           if(data[i][j].name in contributorsList){
+  //             let commitCount = contributorsList[data[i][j].name]['# of commits'];
+  //             contributorsList[data[i][j].name] = {'# of commits': commitCount + data[i][j]['# of commits']};
+  //           } else {
+  //             contributorsList[data[i][j].name] = {"# of commits": data[i][j]['# of commits']}
+  //           }
+  //         }
+  //       }
+  //
+  //     }
+  //       var contributorsCount = 0;
+  //       for (x in contributorsList)
+  //       { contributorsCount++; }
+  //       console.log(chalk.red("\nTotal active contributors with commit in the last "+ nbOfDays + " days (rounded at "+roundedNbOfWeeks+" weeks) = "+ contributorsCount+"\n"));
+  //
+  //       if(contributorsCount > 0){
+  //         console.log(chalk.blue("Contributors List:"));
+  //         console.log(contributorsList);
+  //         console.log("\n");
+  //       }
+  //
+  //       var forkContributorsCount = 0;
+  //       for (x in forkcontributorsList)
+  //       { forkContributorsCount++; }
+  //       console.log(chalk.red("\nTotal forked repo active contributors with commit in the last "+ nbOfDays + " days (rounded at "+roundedNbOfWeeks+" weeks) = "+ forkContributorsCount+"\n"));
+  //
+  //       if(contributorsCount > 0){
+  //         console.log(chalk.blue("Fork Contributors List:"));
+  //         console.log(forkcontributorsList);
+  //         console.log("\n");
+  //       }
 }
 
 const introText = () => {
@@ -258,15 +337,21 @@ program
   .option('-t, --token [GHToken]', 'Running command with Personal Github Token (for 2FA setup)')
   .option('-u, --username [username]', 'username (use Token if you set 2FA on Github)')
   .option('-pwd, --password [password]', 'password')
+  .option('-r, --raw', 'Raw output')
   .option('-apiurl, --apiurl [apiurl]', 'API url if not https://api.Github.com')
   .action((org, options) => {
-    introText();
+
+    if(!options.raw){
+      introText();
+    }
     var github = authenticate(options);
     getGithubOrgList(github, org, options.private)
     .then((data) => {
-      if(options.private) console.log(chalk.red("\nPrivate Repos Only"));
-      console.log(chalk.blue("\nTotal # of repos = "+data.length));
-      console.log(chalk.blue("\nRepo list:"));
+      if(!options.raw){
+        if(options.private) console.log(chalk.red("\nPrivate Repos Only"));
+        console.log(chalk.blue("\nTotal # of repos = "+data.length));
+        console.log(chalk.blue("\nRepo list:"));
+      }
       var forked_repos = [];
       for(i=0;i<data.length;i++){
         if(data[i].fork){
@@ -275,7 +360,9 @@ program
           console.log(data[i].name);
         }
       }
-      console.log(chalk.blue("\nForked Repo list:"));
+      if(!options.raw){
+        console.log(chalk.blue("\nForked Repo list:"));
+      }
       for(i=0;i<forked_repos.length;i++){
           console.log(forked_repos[i]);
       }
@@ -359,19 +446,50 @@ program
     .option('-apiurl, --apiurl [apiurl]', 'API url if not https://api.github.com')
     .action((org, options) => {
       introText();
+
       var github = authenticate(options);
       var promiseArray = [];
+      organization = org;
+      if (fs.existsSync(filePath+organization)) {
+        console.log(chalk.red("\nWorking off file repoList in tmp folder. Delete file to restart counting from scratch"));
+        fs.readFile(filePath+organization, 'utf8', function(err, contents) {
+            var repoListArray = JSON.parse(contents);;
+            var repoToBeProcessed = [];
+            for(var i=0; i<repoListArray.length; i++){
+              if(!repoListArray[i].hasOwnProperty('contributorsList')){
+                repoToBeProcessed.push(repoListArray[i]);
+              }
+            }
+
+            var repoArray = repoToBeProcessed.map(repo => () =>
+              getGithubRepoSummaryStats(github, org, repo.name, repo.forked)
+            );
+            registerEventListeners(repoArray);
+            promiseProcess(repoArray);
+            //console.log("done !");
+        });
 
 
-      getGithubOrgList(github, org, options.private)
-      .then((data) => {
-        if(options.private) console.log(chalk.red("\nPrivate Repos Only"));
-        console.log(chalk.blue("\nTotal # of repos = "+data.length));
-        promiseArray = data.map(repo => () => getGithubRepoSummaryStats(github, org, repo.name, repo.fork));
-        registerEventListeners(promiseArray);
-        promiseProcess(promiseArray);
-      })
-      .catch((err) => {console.error(err);})
+      } else {
+          getGithubOrgList(github, org, options.private)
+          .then((data) => {
+            if(options.private) console.log(chalk.red("\nPrivate Repos Only"));
+            console.log(chalk.blue("\nTotal # of repos = "+data.length));
+            var repoArray = data.map(repo => { return {"name":repo.name , "forked":repo.fork}});
+            fs.writeFile(filePath+organization, JSON.stringify(repoArray), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
+            });
+
+            promiseArray = data.map(repo => () =>
+              getGithubRepoSummaryStats(github, org, repo.name, repo.fork)
+            );
+            registerEventListeners(promiseArray);
+            promiseProcess(promiseArray);
+          })
+          .catch((err) => {console.error(err);})
+        }
     });
 
 
