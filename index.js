@@ -131,7 +131,7 @@ const registerEventListeners = (promiseArray) => {
   var lastMessage;
   // register a listener for the 'randomString' event
   eventEmitter.on('promiseCompleted', function (repoName, list) {
-    
+
     console.log(list.length+" contributors for \t"+repoName);
     // repoStatsList.push(list);
     fs.readFile(filePath+organization, 'utf8', function(err, contents) {
@@ -450,6 +450,10 @@ program
       var github = authenticate(options);
       var promiseArray = [];
       organization = org;
+
+      if (!fs.existsSync(filePath)){
+          fs.mkdirSync(filePath);
+      }
       if (fs.existsSync(filePath+organization)) {
         console.log(chalk.red("\nWorking off file repoList in tmp folder. Delete file to restart counting from scratch"));
         fs.readFile(filePath+organization, 'utf8', function(err, contents) {
