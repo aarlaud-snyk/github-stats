@@ -21,6 +21,10 @@ npm install -g
 - github-stats repoList \<Org name\> -t \<GitHubToken\>
 - github-stats repoContributorCount \<Org name\> \<Repo Name\> -t \<GitHubToken\>
 - github-stats orgContributorCount \<Org name\>  -t \<GitHubToken\>
+
+Example: github-stats orgContributorCount snyk -t <my_github_token>
+
+#### Useful flags
 - Use -p or --private to restrict to private repos only (repoList and orgContributorCount only)
 - use --apiurl to set the url of your Github Enterprise instance __**API Endpoint**__ (i.e --apiurl=https://my-ghe-instance.company.com/api/v3)
 - if using proxy, exporting the http_proxy settings should do the trick. Google search the details of how to set that up, pretty straightforward.
