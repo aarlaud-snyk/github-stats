@@ -29,7 +29,7 @@ Example: github-stats orgContributorCount snyk -t <my_github_token>
 - use --apiurl to set the url of your Github Enterprise instance __**API Endpoint**__ (i.e --apiurl=https://my-ghe-instance.company.com/api/v3)
 - if using proxy, exporting the http_proxy settings should do the trick. Google search the details of how to set that up, pretty straightforward.
 
-## __Github does not return results immediately__. So it is very likely not to return any results at first. Try again after a few minutes and you'll get the results. (see [Github's word about caching](https://developer.github.com/v3/repos/statistics/))
+## <span style="color:red">__Github does not return results immediately__. So it is very likely not to return any results at first. Try again after a few minutes and you'll get the results. You might need to run that a few times until you get the results.</span> (see [Github's word about caching](https://developer.github.com/v3/repos/statistics/))
 
 #### Commands
 - repoList: List all repositories under an organization. Can filter on private repos only (--private).
