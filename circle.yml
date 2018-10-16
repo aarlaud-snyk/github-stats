@@ -13,7 +13,7 @@ jobs:
           command: |
             git clone https://github.com/aarlaud-snyk/github-stats
       - run:
-          name: "Build"
+          name: "Install deps"
           command: |
             cd github-stats
             npm install
