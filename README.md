@@ -7,8 +7,8 @@
 
 ##### Packages: Node JS CLI app using commander, chalk, and github-base
 
-### Installation (globally to use as CLI)
-npm install -g
+### Installation
+npm install
 
 #### Prerequisites
 - Node 8 (ES6 support for Promises)
@@ -29,7 +29,7 @@ Example: github-stats orgContributorCount snyk -t <my_github_token>
 - use --apiurl to set the url of your Github Enterprise instance __**API Endpoint**__ (i.e --apiurl=https://my-ghe-instance.company.com/api/v3)
 - if using proxy, exporting the http_proxy settings should do the trick. Google search the details of how to set that up, pretty straightforward.
 
-## <span style="color:red">__Github does not return results immediately__. So it is very likely not to return any results at first. Try again after a few minutes and you'll get the results. You might need to run that a few times until you get the results.</span> (see [Github's word about caching](https://developer.github.com/v3/repos/statistics/))
+## <span style="color:red">You might need multiple runs to get the results.__Github does not return results immediately__. So it is very likely not to return any results at first. Try again after a short moment. If you have a lot of repos in the organization, you might need to run it multiple times until the total number is extracted </span> (details about [Github's word about caching](https://developer.github.com/v3/repos/statistics/))
 
 #### Commands
 - repoList: List all repositories under an organization. Can filter on private repos only (--private).
