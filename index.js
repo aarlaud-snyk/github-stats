@@ -5,74 +5,29 @@ const INTER_CALLS_DELAY = 1000
 
 var program = require('commander')
 const chalk = require('chalk')
-var GitHub = require('github-base')
 const figlet = require('figlet')
 var fs = require('fs')
 var path = require('path')
+var contributors = require('./contributors.js')
+var githubUtils = require('./github');
 
-var nbOfDays = 90
-var roundedNbOfWeeks = Math.floor(nbOfDays / 7)
+
 var filePath = path.join(__dirname, '/tmp/')
 var organization = ''
 const EventEmitter = require('events').EventEmitter
 const eventEmitter = new EventEmitter()
 
+
+
 // Adding global Exception tracing
 process.on('uncaughtException', function onUncaughtException (err) {
-  console.err('uncaught Exception', err)
+  console.log('uncaught Exception', err)
 })
 process.on('unhandledRejection', function onUnhandledRejection (err) {
-  console.err('unhandled Rejection', err)
+  console.log('unhandled Rejection', err)
 })
 
-const authenticate = (options) => {
-  var githubHandler
-  var apiurl = 'https://api.github.com'
-  if (options.apiurl) {
-    if (options.apiurl.substring(0, 8) !== 'https://' || !options.apiurl.includes('/api/v3')) {
-      console.log('The api url should look like https://mygheinstanceurl.mycompany.com/api/v3')
-      process.exit(1)
-    }
-    // console.log(options.apiurl.includes('/api/v3'));
-    // if(options.apiurl.substring(0,7))
-    apiurl = options.apiurl
-  }
-  if (options.token) {
-    githubHandler = new GitHub({
-      token: options.token,
-      apiurl: apiurl
-    })
-  } else if (options.username && options.password) {
-    githubHandler = new GitHub({
-      username: options.username,
-      password: options.password,
-      apiurl: apiurl
-    })
-  } else {
-    console.error(chalk.red('Invalid input ! Must provide token or username/password'))
-    process.exit(1)
-  }
-  return githubHandler
-}
 
-const getGithubOrgList = (githubHandler, orgName, privateReposOnly) => {
-  return new Promise((resolve, reject) => {
-    var url = '/orgs/' + orgName + '/repos?type=all'
-    if (privateReposOnly) url = '/orgs/' + orgName + '/repos?type=private'
-    githubHandler.paged(url, function (err, res, stream) {
-      if (err) {
-        reject(err)
-      } else {
-        let interpretedResponse = interpretResponseCode(stream.statusCode)
-        if (interpretedResponse === 'OK') {
-          resolve(res)
-        } else {
-          reject(interpretedResponse)
-        }
-      }
-    })
-  })
-}
 
 const getGithubRepoStats = (githubHandler, orgName, repoName) => {
   return new Promise((resolve, reject) => {
@@ -161,7 +116,7 @@ const registerEventListeners = (promiseArray) => {
       console.log(chalk.red(lastMessage))
     } else {
       // consolidateContributorsList(repoStatsList);
-      consolidateContributorsList()
+      contributors.processLists(organization)
     }
   })
 
@@ -201,97 +156,7 @@ const promiseProcess = (promiseArray) => {
   }
 }
 
-const consolidateContributorsList = (data = null) => {
-  var contributorsList = []
-  var forkcontributorsList = []
-  fs.readFile(filePath + organization, 'utf8', function (err, contents) {
-    var data = JSON.parse(contents)
-    if (err) {
-      throw new Error(err.message)
-    }
-    for (var i = 0; i < data.length; i++) {
-      for (var j = 0; j < data[i].contributorsList.length; j++) {
-        if (data[i].forked) {
-          if (data[i].contributorsList[j].name in forkcontributorsList) {
-            let commitCount = forkcontributorsList[data[i].contributorsList[j].name]['# of commits']
-            forkcontributorsList[data[i].contributorsList[j].name] = { '# of commits': commitCount + data[i].contributorsList[j]['# of commits'] }
-          } else {
-            forkcontributorsList[data[i].contributorsList[j].name] = { '# of commits': data[i].contributorsList[j]['# of commits'] }
-          }
-        } else {
-          if (data[i].contributorsList[j].name in contributorsList) {
-            let commitCount = contributorsList[data[i].contributorsList[j].name]['# of commits']
-            contributorsList[data[i].contributorsList[j].name] = { '# of commits': commitCount + data[i].contributorsList[j]['# of commits'] }
-          } else {
-            contributorsList[data[i].contributorsList[j].name] = { '# of commits': data[i].contributorsList[j]['# of commits'] }
-          }
-        }
-      }
-    }
-    var contributorsCount = 0
-    for (var x in contributorsList) { contributorsCount++ }
-    console.log(chalk.red('\nTotal active contributors with commit in the last ' + nbOfDays + ' days (rounded at ' + roundedNbOfWeeks + ' weeks) = ' + contributorsCount + '\n'))
 
-    if (contributorsCount > 0) {
-      console.log(chalk.blue('Contributors List:'))
-      console.log(contributorsList)
-      console.log('\n')
-    }
-
-    var forkContributorsCount = 0
-    for (x in forkcontributorsList) { forkContributorsCount++ }
-    console.log(chalk.red('\nTotal forked repo active contributors with commit in the last ' + nbOfDays + ' days (rounded at ' + roundedNbOfWeeks + ' weeks) = ' + forkContributorsCount + '\n'))
-
-    if (contributorsCount > 0) {
-      console.log(chalk.blue('Fork Contributors List:'))
-      console.log(forkcontributorsList)
-      console.log('\n')
-    }
-  })
-
-  // for(i=0;i<data.length;i++){
-  //
-  //       for(j=0;j<data[i].length;j++){
-  //         if(data[i][j].fork){
-  //           if(data[i][j].name in forkcontributorsList){
-  //             let commitCount = forkcontributorsList[data[i][j].name]['# of commits'];
-  //             forkcontributorsList[data[i][j].name] = {'# of commits': commitCount + data[i][j]['# of commits']};
-  //           } else {
-  //             forkcontributorsList[data[i][j].name] = {"# of commits": data[i][j]['# of commits']}
-  //           }
-  //         } else {
-  //           if(data[i][j].name in contributorsList){
-  //             let commitCount = contributorsList[data[i][j].name]['# of commits'];
-  //             contributorsList[data[i][j].name] = {'# of commits': commitCount + data[i][j]['# of commits']};
-  //           } else {
-  //             contributorsList[data[i][j].name] = {"# of commits": data[i][j]['# of commits']}
-  //           }
-  //         }
-  //       }
-  //
-  //     }
-  //       var contributorsCount = 0;
-  //       for (x in contributorsList)
-  //       { contributorsCount++; }
-  //       console.log(chalk.red("\nTotal active contributors with commit in the last "+ nbOfDays + " days (rounded at "+roundedNbOfWeeks+" weeks) = "+ contributorsCount+"\n"));
-  //
-  //       if(contributorsCount > 0){
-  //         console.log(chalk.blue("Contributors List:"));
-  //         console.log(contributorsList);
-  //         console.log("\n");
-  //       }
-  //
-  //       var forkContributorsCount = 0;
-  //       for (x in forkcontributorsList)
-  //       { forkContributorsCount++; }
-  //       console.log(chalk.red("\nTotal forked repo active contributors with commit in the last "+ nbOfDays + " days (rounded at "+roundedNbOfWeeks+" weeks) = "+ forkContributorsCount+"\n"));
-  //
-  //       if(contributorsCount > 0){
-  //         console.log(chalk.blue("Fork Contributors List:"));
-  //         console.log(forkcontributorsList);
-  //         console.log("\n");
-  //       }
-}
 
 const introText = () => {
   figlet.text('SNYK', {
@@ -329,8 +194,8 @@ program
     if (!options.raw) {
       introText()
     }
-    var github = authenticate(options)
-    getGithubOrgList(github, org, options.private)
+    var github = githubUtils.authenticate(options)
+    githubUtils.getGithubOrgList(github, org, options.private)
       .then((data) => {
         if (!options.raw) {
           if (options.private) console.log(chalk.red('\nPrivate Repos Only'))
@@ -369,7 +234,7 @@ program
   .option('-apiurl, --apiurl [apiurl]', 'API url if not https://api.Github.com')
   .action((org, repo, options) => {
     if (!options.raw) introText()
-    var github = authenticate(options)
+    var github = githubUtils.authenticate(options)
     getGithubRepoStats(github, org, repo)
       .then((data) => {
         var rawCount = data.length
@@ -423,7 +288,7 @@ program
   .action((org, options) => {
     introText()
 
-    var github = authenticate(options)
+    var github = githubUtils.authenticate(options)
     var promiseArray = []
     organization = org
 
@@ -452,7 +317,7 @@ program
         // console.log("done !");
       })
     } else {
-      getGithubOrgList(github, org, options.private)
+      getGithubOrgList.getGithubOrgList(github, org, options.private)
         .then((data) => {
           if (options.private) console.log(chalk.red('\nPrivate Repos Only'))
           console.log(chalk.blue('\nTotal # of repos = ' + data.length))
@@ -498,3 +363,5 @@ const interpretResponseCode = (statusCode) => {
   }
   return response
 }
+
+
