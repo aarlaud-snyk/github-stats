@@ -116,7 +116,7 @@ const registerEventListeners = (promiseArray) => {
       console.log(chalk.red(lastMessage))
     } else {
       // consolidateContributorsList(repoStatsList);
-      contributors.processLists(organization)
+      contributors.processLists(filePath, organization)
     }
   })
 

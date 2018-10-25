@@ -2,7 +2,6 @@ var chalk = require('chalk')
 var fs = require('fs')
 var path = require('path')
 
-var filePath = path.join(__dirname, '/tmp/')
 var nbOfDays = 90
 var roundedNbOfWeeks = Math.floor(nbOfDays / 7)
 
@@ -12,7 +11,7 @@ const processLists = (organization, data = null) => {
     .catch((err) => { throw new Error(err) })
 }
 
-const consolidateContributorsList = (organization, data = null) => {
+const consolidateContributorsList = (filePath, organization, data = null) => {
   return new Promise((resolve, reject) => {
     var contributorsList = []
     var forkContributorsList = []

@@ -28,9 +28,8 @@ describe('Non connected functions', function () {
   })
   describe('Testing consolidateContributorsList()', function () {
     var convert = require('../contributors.js')
-
     it('should return 1 active contributors for repos', function (done) {
-      convert.consolidateContributorsList('aarlaud-snyk')
+      convert.consolidateContributorsList(filePath, 'aarlaud-snyk')
         .then((result) => {
           expect(result).to.have.property('list')
           expect(result['list']).to.have.property('aarlaud').and.to.have.deep.property('# of commits', 5)
@@ -38,7 +37,7 @@ describe('Non connected functions', function () {
         })
     })
     it('should return 25 active contributors for the forked repos', function (done) {
-      convert.consolidateContributorsList('aarlaud-snyk')
+      convert.consolidateContributorsList(filePath, 'aarlaud-snyk')
         .then((result) => {
           expect(result).to.have.property('forkedList')
           expect(result['forkedList']).to.have.property('aarlaud').and.to.have.deep.property('# of commits', 14)
