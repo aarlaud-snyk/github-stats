@@ -18,10 +18,15 @@ jobs:
             cd github-stats
             npm install
       - run:
-          name: "Test"
+          name: "Run Tests"
           command: |
             cd github-stats
             npm test
+      - run:
+          name: "Snyk Test"
+          command: |
+            cd github-stats
+            snyk test --org=aarlaud-snyk
       - run:
           name: "Monitor"
           command: |
