@@ -317,7 +317,7 @@ program
         // console.log("done !");
       })
     } else {
-      getGithubOrgList.getGithubOrgList(github, org, options.private)
+      githubUtils.getGithubOrgList(github, org, options.private)
         .then((data) => {
           if (options.private) console.log(chalk.red('\nPrivate Repos Only'))
           console.log(chalk.blue('\nTotal # of repos = ' + data.length))
