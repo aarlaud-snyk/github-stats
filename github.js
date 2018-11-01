@@ -1,6 +1,29 @@
 var GitHub = require('github-base')
 var chalk = require('chalk')
 
+const interpretResponseCode = (statusCode) => {
+  var response = ''
+  switch (statusCode) {
+    case 200:
+    case 204:
+      response = 'OK'
+      break
+    case 202:
+      response = 'Github received listing request and is processing data. Please try again in a moment'
+      break
+    case 404:
+      response = 'Organization cannot be found.'
+      break
+    case 403:
+      response = 'Access Denied'
+      break
+    default:
+      response = 'Unexpected response code: ' + statusCode
+  }
+  return response
+}
+
+
 const authenticate = (options) => {
   var githubHandler
   var apiurl = 'https://api.github.com'
