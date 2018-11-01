@@ -10,7 +10,8 @@ var fs = require('fs')
 var path = require('path')
 var contributors = require('./contributors.js')
 var githubUtils = require('./github');
-
+var nbOfDays = 90
+var roundedNbOfWeeks = Math.floor(nbOfDays / 7)
 
 var filePath = path.join(__dirname, '/tmp/')
 var organization = ''
