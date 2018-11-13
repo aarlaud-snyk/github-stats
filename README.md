@@ -18,11 +18,11 @@ npm install
 - If using Github Enterprise, you'll need your api endpoint. Usually looks like the base url you know appended with /api/v3, i.e https://my-ghe-instance.mycompany.com/api/v3.
 
 ### Usage
-- github-stats repoList \<Org name\> -t \<GitHubToken\>
-- github-stats repoContributorCount \<Org name\> \<Repo Name\> -t \<GitHubToken\>
-- github-stats orgContributorCount \<Org name\>  -t \<GitHubToken\>
+- node index.js repoList \<Org name\> -t \<GitHubToken\>
+- node index.js repoContributorCount \<Org name\> \<Repo Name\> -t \<GitHubToken\>
+- node index.js orgContributorCount \<Org name\>  -t \<GitHubToken\>
 
-Example: github-stats orgContributorCount snyk -t <my_github_token>
+Example: node index.js orgContributorCount snyk -t <my_github_token>
 
 #### Useful flags
 - Use -p or --private to restrict to private repos only (repoList and orgContributorCount only)
