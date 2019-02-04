@@ -8,7 +8,8 @@
 ##### Packages: Node JS CLI app using commander, chalk, and github-base
 
 ### Installation
-npm install
+1. git clone https://github.com/aarlaud-snyk/github-stats
+2. npm install
 
 #### Prerequisites
 - Node 8 (ES6 support for Promises)
