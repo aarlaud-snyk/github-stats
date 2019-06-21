@@ -8,10 +8,7 @@ jobs:
           name: "Setup Snyk"
           command: |
             sudo npm install -g snyk
-      - run:
-          name: "Checkout"
-          command: |
-            git clone https://github.com/aarlaud-snyk/github-stats
+      - checkout
       - run:
           name: "Install deps"
           command: |
