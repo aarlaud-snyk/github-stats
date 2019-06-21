@@ -14,7 +14,7 @@
 #### Prerequisites
 - Node 8 (ES6 support for Promises)
 - Be member of the organization for private repositories
-- **full repo scope granted** to personal access token
+- **full repo scope granted** to personal access token (how to: https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line or click on this https://github.com/settings/tokens if logged in).
 - Github credentials
 - If using Github Enterprise, you'll need your api endpoint. Usually looks like the base url you know appended with /api/v3, i.e https://my-ghe-instance.mycompany.com/api/v3.
 
