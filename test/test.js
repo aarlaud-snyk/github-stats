@@ -56,25 +56,28 @@ describe('Connected functions', function () {
       var options = { 'token': process.env.GITHUB_TOKEN }
       var githubHandler = githubUtils.authenticate(options)
 
-      githubHandler.get('/repos/doowb/fooobarbaz', function (err, res, stream) {
-        if (err) {
-          console.log('error testing non existing repo')
-        }
-        assert.equal(stream.statusCode, 404)
-        done()
+      githubHandler.get('/repos/doowb/fooobarbaz')
+      .then(() => {
+        fail()
       })
+      .catch((err) => {
+        assert.equal(err.message, "Not Found")
+        done()
+      });
+
+      
     })
 
     it('should authenticate with token - works for known repos', function (done) {
       var options = { 'token': process.env.GITHUB_TOKEN }
       var githubHandler = githubUtils.authenticate(options)
 
-      githubHandler.get('/repos/snyk/snyk', function (err, res, stream) {
-        if (err) {
-          console.log('error testing non existing repo')
-        }
-        assert.equal(stream.statusCode, 200)
+      githubHandler.get('/repos/snyk/snyk')
+      .then((data) => {
         done()
+      })
+      .catch((err) => {
+        fail()
       })
     })
   })
