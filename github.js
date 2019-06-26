@@ -57,19 +57,21 @@ const authenticate = (options) => {
 const getGithubOrgList = (githubHandler, orgName, privateReposOnly) => {
   return new Promise((resolve, reject) => {
     var url = '/orgs/' + orgName + '/repos?type=all'
-    if (privateReposOnly) url = '/orgs/' + orgName + '/repos?type=private'
-    githubHandler.paged(url, function (err, res, stream) {
-      if (err) {
-        reject(err)
-      } else {
-        let interpretedResponse = interpretResponseCode(stream.statusCode)
+    if (privateReposOnly) url = '/orgs/' + orgName + '/repos?type=private'    
+    githubHandler.paged(url)
+    .then((res) => {
+      let interpretedResponse = interpretResponseCode(res.pages[0].statusCode)
         if (interpretedResponse === 'OK') {
-          resolve(res)
+          resolve(res.pages[0].body);
         } else {
-          reject(interpretedResponse)
+          reject(interpretedResponse);
         }
-      }
     })
+    .catch((err) => {
+      reject(err);
+    });
+
+
   })
 }
 

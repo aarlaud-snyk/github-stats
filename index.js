@@ -32,19 +32,22 @@ process.on('unhandledRejection', function onUnhandledRejection (err) {
 
 const getGithubRepoStats = (githubHandler, orgName, repoName) => {
   return new Promise((resolve, reject) => {
-    githubHandler.paged('/repos/' + orgName + '/' + repoName + '/stats/contributors', function (err, res, stream) {
-      if (err) {
-        reject(err)
+    githubHandler.paged('/repos/' + orgName + '/' + repoName + '/stats/contributors')
+    .then((res) => {
+      let interpretedResponse = interpretResponseCode(res.pages[0].statusCode)
+      if (interpretedResponse === 'OK') {
+        resolve(res.pages[0])
       } else {
-        let interpretedResponse = interpretResponseCode(stream.statusCode)
-        if (interpretedResponse === 'OK') {
-          resolve(res)
-        } else {
-          console.error('Issue with ' + orgName + '/' + repoName)
-          reject({ 'error': interpretedResponse, 'statusCode': stream.statusCode, 'headers': stream.headers })
-        }
+        console.error('Issue with ' + orgName + '/' + repoName)
+        reject({ 'error': interpretedResponse, 'statusCode': stream.statusCode, 'headers': stream.headers })
       }
     })
+    .catch((err) => {
+      reject(err);
+    });
+
+
+
   })
 }
 
