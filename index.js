@@ -36,10 +36,10 @@ const getGithubRepoStats = (githubHandler, orgName, repoName) => {
     .then((res) => {
       let interpretedResponse = interpretResponseCode(res.pages[0].statusCode)
       if (interpretedResponse === 'OK') {
-        resolve(res.pages[0])
+        resolve(res.pages[0].body)
       } else {
         console.error('Issue with ' + orgName + '/' + repoName)
-        reject({ 'error': interpretedResponse, 'statusCode': stream.statusCode, 'headers': stream.headers })
+        reject({ 'error': interpretedResponse, 'statusCode': res.pages[0].statusCode, 'headers': res.pages[0].headers })
       }
     })
     .catch((err) => {
