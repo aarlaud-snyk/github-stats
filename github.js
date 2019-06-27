@@ -60,12 +60,16 @@ const getGithubOrgList = (githubHandler, orgName, privateReposOnly) => {
     if (privateReposOnly) url = '/orgs/' + orgName + '/repos?type=private'    
     githubHandler.paged(url)
     .then((res) => {
-      let interpretedResponse = interpretResponseCode(res.pages[0].statusCode)
+      var aggregatedPagesRecords = [];
+      for(var i=0;i<res.pages.length;i++){
+        let interpretedResponse = interpretResponseCode(res.pages[i].statusCode)
         if (interpretedResponse === 'OK') {
-          resolve(res.pages[0].body);
+          aggregatedPagesRecords = aggregatedPagesRecords.concat(res.pages[i].body);
         } else {
           reject(interpretedResponse);
         }
+      }
+      resolve(aggregatedPagesRecords);
     })
     .catch((err) => {
       reject(err);
