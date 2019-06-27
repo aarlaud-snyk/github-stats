@@ -34,13 +34,18 @@ const getGithubRepoStats = (githubHandler, orgName, repoName) => {
   return new Promise((resolve, reject) => {
     githubHandler.paged('/repos/' + orgName + '/' + repoName + '/stats/contributors')
     .then((res) => {
-      let interpretedResponse = interpretResponseCode(res.pages[0].statusCode)
-      if (interpretedResponse === 'OK') {
-        resolve(res.pages[0].body)
-      } else {
-        console.error('Issue with ' + orgName + '/' + repoName)
-        reject({ 'error': interpretedResponse, 'statusCode': res.pages[0].statusCode, 'headers': res.pages[0].headers })
+      var aggregatedPagesRecords = [];
+      for(var i=0;i<res.pages.length;i++){
+        let interpretedResponse = interpretResponseCode(res.pages[i].statusCode)
+        if (interpretedResponse === 'OK' && res.pages[i].statusMessage != 'No Content') {
+          aggregatedPagesRecords = aggregatedPagesRecords.concat(res.pages[i].body);
+        } else if(interpretedResponse === 'OK' && res.pages[i].statusMessage === 'No Content'){
+          continue;
+        } else {
+          reject({ 'error': interpretedResponse, 'statusCode': res.pages[i].statusCode, 'statusMessage': res.pages[i].statusMessage })
+        }
       }
+      resolve(aggregatedPagesRecords);
     })
     .catch((err) => {
       reject(err);
@@ -56,8 +61,14 @@ const getGithubRepoSummaryStats = (githubHandler, orgName, repoName, isForked) =
     getGithubRepoStats(githubHandler, orgName, repoName)
       .then((data) => {
         var contributorsList = []
+        
         for (var i = 0; i < data.length; i++) {
           var nbOfWeeks = roundedNbOfWeeks
+          
+          if(!data[i].weeks){
+            continue;
+          }
+
           if (data[i].weeks.length < roundedNbOfWeeks) {
             nbOfWeeks = data[i].weeks.length
           }
@@ -243,6 +254,7 @@ program
       .then((data) => {
         var rawCount = data.length
         var contributorsList = []
+        console.log(data);
         for (var i = 0; i < data.length; i++) {
           var nbOfWeeks = roundedNbOfWeeks
           if (data[i].weeks.length < roundedNbOfWeeks) {
