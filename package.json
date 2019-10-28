@@ -1,5 +1,5 @@
 {
-  "name": "github-stats",
+  "name": "aarlaud-snyk/github-stats",
   "version": "1.0.0",
   "description": "Github repo stats extractor for Snyk's purposes",
   "main": "index.js",
